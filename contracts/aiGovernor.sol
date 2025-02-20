@@ -8,4 +8,11 @@ interface IERC20 {
     function transferFrom(address, address, uint256) external returns (bool);
 }
 
-contract aiGovernor {}
+contract aiGovernor {
+    function handleWithdrawalRequest(
+        uint128 requestId,
+        address member,
+        uint256 amount,
+        string memory purpose
+    ) external {}
+}

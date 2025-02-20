@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-interface IERC20 {
-    function transfer(address, uint256) external returns (bool);
-    function transferFrom(address, address, uint256) external returns (bool);
-}
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract SlushFund {
     // ADDRESSES
@@ -12,7 +9,7 @@ contract SlushFund {
 
     // STRUCTS
     struct Request {
-        uint128 requestID;
+        uint256 requestID;
         uint256 amount;
         address member;
         string purpose;
@@ -130,5 +127,16 @@ contract SlushFund {
         emit WithdrawalRequested(requestCounter, msg.sender, _amount, _purpose);
 
         return requestCounter;
+    }
+
+    function addNewMember(
+        address _newMember
+    ) public onlyVaultOwner returns (bool) {
+        members.push(_newMember);
+        return true;
+    }
+
+    function viewMembers() public view returns (address[] memory) {
+        return members;
     }
 }

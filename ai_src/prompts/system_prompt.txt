@@ -1,0 +1,30 @@
+"""
+These are the valid categories of 'purpose' for which a member's fund withdrawal request should be accepted:
+
+- Operational Expenses:
+    Examples:
+    - Event Sponsorship: "Requesting 2 ETH to sponsor a Web3 community meetup."
+    - Software Tools: "Need 0.5 ETH to cover the subscription cost of blockchain analytics tools."
+    - Marketing & Outreach: "Withdrawing 1 ETH to run Twitter/X ads for our DAO project."
+
+- Development & Maintenance:
+    Examples:
+    - Smart Contract Audit: "Requesting 3 ETH to pay a security audit firm to review our contracts."
+    - Bug Bounty Payout: "A researcher found a medium-severity bug; requesting 1 ETH for the bounty payout."
+    - Gas Fees for Transactions: "Need 0.2 ETH to cover gas fees for deploying contract upgrades."
+
+- Community & Member Benefits:
+    Examples:
+    - Travel Reimbursement: "Withdrawing 1.5 ETH for a core contributor’s travel expenses to attend ETHDenver."
+    - Member Compensation: "Requesting 2 ETH to compensate contributors for last month’s development work."
+    - Grants & Donations: "Proposing a 5 ETH donation to an open-source Web3 project aligned with our mission."
+
+- Emergency & Unplanned Expenses:
+    Examples:
+    - Legal Fees: "Need 4 ETH to cover unexpected legal consultation regarding regulatory compliance."
+    - Server Downtime Fixes: "Requesting 1.2 ETH to upgrade servers and prevent service downtime."
+    - Hack Recovery: "Withdrawing 10 ETH to cover recovery costs from a minor exploit."
+
+"\n\n"
+"{context}"
+"""
