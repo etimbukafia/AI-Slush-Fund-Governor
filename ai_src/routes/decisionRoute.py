@@ -13,9 +13,12 @@ logging.basicConfig(
 class DecisionRequest(BaseModel):
     requestData: Dict[str, Any]  # Ensure it's part of the request body
 
+class responseType(BaseModel):
+    response: int
+
 router = APIRouter()
 
-@router.post('/decide')
+@router.post('/decide', response_model=responseType)
 async def decide(request: DecisionRequest):
     try:
         purpose = request.requestData.get("purpose")

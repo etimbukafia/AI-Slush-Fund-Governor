@@ -1,1 +1,6 @@
 .env
+accounts.txt
+cache/
+lib/
+out/
+broadcast/

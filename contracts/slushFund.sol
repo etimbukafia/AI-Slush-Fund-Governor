@@ -2,14 +2,31 @@
 pragma solidity ^0.8.26;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IVoting} from "./IVoting.sol";
 
 contract SlushFund {
+    IVoting public votingContract;
     // ADDRESSES
     address payable private immutable slushVault;
 
+    // ENUMS
+    enum RequestError {
+        ZeroTotalContributions,
+        InsufficientFunds,
+        LowContribution,
+        InvalidAmount
+    }
+
+    enum RequestStatus {
+        Pending,
+        Accepted,
+        Rejected,
+        Completed
+    }
+
     // STRUCTS
     struct Request {
-        uint256 requestID;
+        uint128 requestID;
         uint256 amount;
         address member;
         string purpose;
@@ -27,24 +44,8 @@ contract SlushFund {
     //mapping(address => Withdrawal[]) public withdrawalsByMmeber; // Track withdrawals per member
     //Withdrawal[] public allWithdrawals; //Global tracking of all withdrawals
 
-    // ARRAYS
-    address[] public members; // Need to create dummy addresses
-
-    // ENUMS
-    enum RequestError {
-        ZeroTotalContributions,
-        InsufficientFunds,
-        LowContribution
-    }
-    enum GeneralErrors {
-        Unauthorized
-    }
-    enum RequestStatus {
-        Pending,
-        Accepted,
-        Rejected,
-        Completed
-    }
+    uint8 public totalMembers;
+    address[] members;
 
     // EVENTS
     event Contributed(address indexed contributor, uint256 amount);
@@ -56,15 +57,32 @@ contract SlushFund {
         uint256 amount,
         string purpose
     );
+    event RequestAccepted(
+        uint128 requestID,
+        address indexed member,
+        uint256 amount,
+        string purpose,
+        string decision
+    );
+    event RequestRejected(
+        uint128 requestID,
+        address indexed member,
+        uint256 amount,
+        string purpose,
+        string decision
+    );
+
+    event ManualVoting(uint128 requestID);
 
     // ERRORS
-    error NotAuthorizedToDeposit(GeneralErrors reason);
-    error InvalidAmount(uint amount);
+    error NotMember(address nonMember);
+    error InvalidAmount(uint256 amount);
     error TransferFailed();
-    error NotVaultOwner(GeneralErrors reason);
-    error MemberAlreadyExists();
-    error MemberDoesNotExist();
-    error WithdrawalRequestFailed(RequestError reason);
+    error NotVaultOwner(address notOwner);
+    error MemberAlreadyExists(address member);
+    error MemberDoesNotExist(address nonMember);
+    error WithdrawalRequestFailed();
+    error InsufficientBalance(uint256 amount);
 
     // VARIABLES
     IERC20 public immutable token;
@@ -73,14 +91,14 @@ contract SlushFund {
     // MODIFIERS
     modifier onlyMember() {
         if (!isMember[msg.sender]) {
-            revert NotAuthorizedToDeposit(GeneralErrors.Unauthorized);
+            revert NotMember(msg.sender);
         }
         _;
     }
 
     modifier onlyVaultOwner() {
         if (msg.sender != slushVault) {
-            revert NotVaultOwner(GeneralErrors.Unauthorized);
+            revert NotVaultOwner(msg.sender);
         }
         _;
     }
@@ -90,8 +108,18 @@ contract SlushFund {
         slushVault = payable(msg.sender); // Set the deployer as the vault owner
     }
 
-    function contribute(uint256 _amount) public payable onlyMember {
-        if (_amount <= 0) {
+    function setVotingContract(
+        address _votingContract
+    ) external onlyVaultOwner {
+        votingContract = IVoting(_votingContract);
+    }
+
+    function checkBalance() public view returns (uint256) {
+        return token.balanceOf(address(this));
+    }
+
+    function contribute(uint256 _amount) public onlyMember {
+        if (_amount == 0) {
             revert InvalidAmount(_amount);
         }
 
@@ -100,7 +128,7 @@ contract SlushFund {
             revert TransferFailed();
         }
 
-        balances[slushVault] += _amount;
+        //balances[slushVault] += _amount;
         totalReceived[slushVault] += _amount;
         amountContributed[msg.sender] += _amount;
 
@@ -109,34 +137,82 @@ contract SlushFund {
 
     function requestFunds(
         uint256 _amount,
-        string calldata _purpose
-    ) public payable onlyMember returns (uint128) {
-        if (_amount <= 0) {
-            revert InvalidAmount(msg.value);
+        string memory _purpose
+    ) public onlyMember returns (uint128) {
+        if (_amount == 0) {
+            revert InvalidAmount(_amount);
+        }
+
+        if (_amount > token.balanceOf(address(this))) {
+            revert InsufficientBalance(_amount);
         }
 
         requestCounter++;
-        withdrawalRequests[requestCounter] = Request(
-            requestCounter,
-            _amount,
-            msg.sender,
-            _purpose,
-            RequestStatus.Pending
-        );
+
+        Request storage r = withdrawalRequests[requestCounter];
+        r.requestID = requestCounter;
+        r.amount = _amount;
+        r.member = msg.sender;
+        r.purpose = _purpose;
+        r.status = RequestStatus.Pending;
 
         emit WithdrawalRequested(requestCounter, msg.sender, _amount, _purpose);
 
         return requestCounter;
     }
 
+    function handleWithdrawalRequest(
+        uint8 _decision,
+        uint128 _requestID
+    ) public onlyVaultOwner {
+        Request storage r = withdrawalRequests[_requestID];
+        require(r.requestID == _requestID, "Request does not exist");
+        require(
+            r.status == RequestStatus.Pending,
+            "Request has already been fulfilled"
+        );
+
+        if (_decision == 1) {
+            r.status = RequestStatus.Rejected;
+            emit RequestRejected(
+                _requestID,
+                r.member,
+                r.amount,
+                r.purpose,
+                "Rejected"
+            );
+        } else if (_decision == 0) {
+            r.status = RequestStatus.Accepted;
+            require(token.transfer(r.member, r.amount), "Transfer failed");
+            emit RequestAccepted(
+                _requestID,
+                r.member,
+                r.amount,
+                r.purpose,
+                "Accepted"
+            );
+        } else {
+            emit ManualVoting(_requestID);
+        }
+    }
+
     function addNewMember(
         address _newMember
     ) public onlyVaultOwner returns (bool) {
+        if (isMember[_newMember]) {
+            revert MemberAlreadyExists(_newMember); // Optional: Prevent duplicate entries
+        }
         members.push(_newMember);
+        isMember[_newMember] = true;
+        totalMembers += 1;
         return true;
     }
 
     function viewMembers() public view returns (address[] memory) {
         return members;
+    }
+
+    function isMemberCheck(address member) external view returns (bool) {
+        return isMember[member];
     }
 }

@@ -40,8 +40,8 @@ def validate_request(purpose: str):
 
 def extract_decision(response):
     if "True" in response:
-        return True
+        return 0
     elif "False" in response:
-        return False
+        return 1
     else:
-        return "No Decision"
+        return 2
