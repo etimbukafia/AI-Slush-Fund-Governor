@@ -14,7 +14,7 @@ contract InteractSlushFund is Script {
         address nonMember1 = 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC;
         address member2 = 0x90F79bf6EB2c4f870365E785982E1f101E93b906;
 
-        vm.startBroadcast(member2);
+        vm.startBroadcast();
 
         slushFund = SlushFund(
             payable(0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512)
