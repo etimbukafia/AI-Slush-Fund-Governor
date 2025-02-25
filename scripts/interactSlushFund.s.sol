@@ -14,7 +14,7 @@ contract InteractSlushFund is Script {
         address nonMember1 = 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC;
         address member2 = 0x90F79bf6EB2c4f870365E785982E1f101E93b906;
 
-        vm.startBroadcast();
+        vm.startBroadcast(member2);
 
         slushFund = SlushFund(
             payable(0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512)
@@ -25,9 +25,13 @@ contract InteractSlushFund is Script {
         );
 
         uint256 amount = 1000;
-        string memory purpose = "To refund customer's losses";
+        string memory purpose = "To pay smart contract auditor";
 
-        requestFunds(amount, purpose);
+        uint256 initial_balance = mockToken.balanceOf(member2);
+        slushFund.requestFunds(amount, purpose);
+        console.log("Initial balance: ", initial_balance);
+        uint256 current_balance = mockToken.balanceOf(member2);
+        console.log("Current balance: ", current_balance);
 
         vm.stopBroadcast();
     }

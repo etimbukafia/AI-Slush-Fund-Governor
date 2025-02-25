@@ -42,7 +42,7 @@ async function setupEventListener(provider, signer, retryCount = 0) {
 
                 try {
                     const contractWithSigner = slushFund.connect(signer);
-                    const tx = contractWithSigner.handleWithdrawalRequest(
+                    const tx = await contractWithSigner.handleWithdrawalRequest(
                         requestId,
                         response.data.decision
                     );
@@ -64,6 +64,9 @@ async function setupEventListener(provider, signer, retryCount = 0) {
                 );
             }
         });
+
+        // Return the contract instance
+        return slushFund;
     } catch (error) {
         console.error("Error setting up event listener:", error);
         throw error;
@@ -91,7 +94,7 @@ async function reconnect(provider, currentContract, retryCount = 0) {
         await provider.getNetwork();
 
         // If successful, reset the contract listener
-        const newContract = await setupEventListener(provider);
+        const newContract = await setupEventListener(provider, signer);
         console.log("Successfully reconnected!");
 
         return newContract;
@@ -100,7 +103,7 @@ async function reconnect(provider, currentContract, retryCount = 0) {
         console.error("Reconnection attempt failed:", error);
 
         if (retryCount < MAX_RETRIES) {
-            return reconnect(provider, currentContract, retryCount + 1);
+            return reconnect(provider, signer, currentContract, retryCount + 1);
         } else {
             console.error(`Failed to reconnect after ${MAX_RETRIES} attempts. Exiting...`);
             process.exit(1);
@@ -121,14 +124,14 @@ async function getWithdrawalRequest() {
         // Handle provider errors and connection issues
         provider.on("error", async (error) => {
             console.error("Provider error:", error);
-            currentContract = await reconnect(provider, currentContract);
+            currentContract = await reconnect(provider, signer, currentContract);
         });
 
         // Handle network change events
         provider.on("network", async (newNetwork, oldNetwork) => {
             if (oldNetwork) {
                 console.log("Network changed. Reconnecting...");
-                currentContract = await reconnect(provider, currentContract);
+                currentContract = await reconnect(provider, signer, currentContract);
             }
         });
 
