@@ -42,7 +42,7 @@ It consists of two main components :
 ## Installation
 1. Clone the Repository:
 ```
-git clone https://github.com/yourusername/ai-slush-fund-governor.git
+git clone https://github.com/etimbukafia/ai-slush-fund-governor.git
 cd ai-slush-fund-governor
 ```
 
