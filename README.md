@@ -1,6 +1,6 @@
 # AI Slush Fund Governor
 
-The AI Slush Fund Governor is a decentralized application (dApp) prototype designed to experiment the use of AI in making decisions regarding fund use and withdrawal requests. 
+The AI Slush Fund Governor is a simple local dApp prototype designed to experiment the use of AI in making decisions regarding fund use and withdrawal requests. 
 
 It consists of two main components :
 
